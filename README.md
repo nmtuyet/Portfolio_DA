@@ -4,11 +4,7 @@
 
 <h1 align="left">About me</h1>
 
-## 💡 What I Do
-🏥 Transform raw data into actionable insights  
-📊 Design dashboards  
-⚙️ Build data pipelines with Airflow & SQL  
-📈 Support decision-making for managers & executives
+UPDATING...
 
 
 ## 💻 Tech Stack
