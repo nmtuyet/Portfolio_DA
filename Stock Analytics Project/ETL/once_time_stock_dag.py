@@ -5,15 +5,16 @@ import pandas as pd
 from vnstock import Vnstock
 from sqlalchemy import create_engine, text
 from vnstock import Listing
+import os
 
 # ======================
 # CONFIG
 # ======================
-user = "postgres"
-password = "postgres"
-host = "postgres"
-port = "5432"
-database = "stockdb"
+user = os.getenv("PG_USER", "postgres")
+password = os.getenv("PG_PASSWORD", "postgres")
+host = os.getenv("PG_HOST", "postgres")
+port = os.getenv("PG_PORT", "5432")
+database = os.getenv("PG_DATABASE", "stockdb")
 table_name = "once_time_stock"
 
 conn_str = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
