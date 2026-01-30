@@ -60,8 +60,7 @@ Python · Docker · Apache Airflow · vnstock · Pandas · Scikit-learn · Tenso
 ### 📂 Project Structure
 | Thư mục   | File                             | Mô tả                                                                                          |
 | --------- | -------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **ETL**   | `function_update_stock_price.py` | Gọi API từ thư viện **vnstock**, trích xuất dữ liệu giá cổ phiếu theo ngày và lưu vào database |
-|           | `once_time_stock_dag.py`         | Định nghĩa **Airflow DAG** để điều phối pipeline ETL và trigger quá trình trích xuất dữ liệu   |
+| **ETL**   | `vnstock_update_stock_price_dag.py` | Gọi API từ thư viện **vnstock**, trích xuất dữ liệu giá cổ phiếu theo ngày và lưu vào database |
 |           | `stock_price_cleaning.ipynb`     | Làm sạch dữ liệu, chuẩn hóa time series và chuẩn bị dữ liệu đầu vào cho mô hình                |
 | **infra** | `.env`                           | Lưu biến môi trường (database, Airflow, cấu hình ETL)                                          |
 |           | `docker-compose.yml`             | Khởi tạo **Airflow** và **database** local bằng Docker Compose                                 |

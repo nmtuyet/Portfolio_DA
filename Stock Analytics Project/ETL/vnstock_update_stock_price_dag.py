@@ -1,4 +1,4 @@
-from airflow import DAG
+from airflow import DAG # type: ignore
 from airflow.operators.python import PythonOperator # type: ignore
 from airflow.hooks.base import BaseHook # type: ignore
 from airflow.models import Variable # type: ignore
@@ -6,13 +6,15 @@ from datetime import datetime, timedelta
 import pandas as pd
 from vnstock import Vnstock, Listing
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import ProgrammingError
+
 
 
 # ======================
 # AIRFLOW CONFIG
 # ======================
 POSTGRES_CONN_ID = Variable.get("POSTGRES_CONN_ID", default_var="postgres_stockdb")
-ONCE_TIME_STOCK_TABLE = Variable.get("ONCE_TIME_STOCK_TABLE", default_var="once_time_stock")
+STOCK_PRICE_TABLE = Variable.get("STOCK_PRICE_TABLE", default_var="stock_prices")
 VNSTOCK_SOURCE = Variable.get("VNSTOCK_SOURCE", default_var="VCI")
 DEFAULT_START_DATE = Variable.get("VNSTOCK_DEFAULT_START_DATE", default_var="2024-01-01")
 
@@ -44,22 +46,23 @@ def get_all_symbols_today():
     except Exception as e:
         raise RuntimeError(f"Lỗi quét danh sách mã: {e}")
 
-
 def update_stock_price_nearest(symbol, table_name, engine):
-    """
-    Cập nhật dữ liệu giá mới nhất cho 1 mã.
-    """
     try:
-        query = text(f"SELECT * FROM {table_name} WHERE symbol = :symbol")
-        df_old = pd.read_sql(query, engine, params={"symbol": symbol})
+        # 1️⃣ Try đọc dữ liệu cũ
+        try:
+            query = text(f"SELECT time FROM {table_name} WHERE symbol = :symbol")
+            df_old = pd.read_sql(query, engine, params={"symbol": symbol})
+        except ProgrammingError:
+            df_old = pd.DataFrame()
 
-        if not df_old.empty and "time" in df_old.columns:
+        # 2️⃣ Xác định start_date
+        if not df_old.empty:
             df_old["time"] = pd.to_datetime(df_old["time"])
-            last_date = df_old["time"].max()
-            start_date = (last_date + timedelta(days=1)).strftime("%Y-%m-%d")
+            start_date = (df_old["time"].max() + timedelta(days=1)).strftime("%Y-%m-%d")
         else:
             start_date = DEFAULT_START_DATE
 
+        # 3️⃣ Fetch dữ liệu mới
         stock = Vnstock().stock(symbol=symbol, source=VNSTOCK_SOURCE)
         df_new = stock.quote.history(
             start=start_date,
@@ -70,13 +73,15 @@ def update_stock_price_nearest(symbol, table_name, engine):
             print(f"✅ {symbol}: không có dữ liệu mới.")
             return
 
+        # 4️⃣ Insert → tự tạo bảng nếu chưa có
         df_new["symbol"] = symbol
         df_new.to_sql(table_name, engine, if_exists="append", index=False)
+
         print(f"✅ {symbol}: thêm {len(df_new)} dòng.")
 
     except Exception as e:
-        print(f"⚠️ Bỏ qua {symbol}: {e}")
-
+        print(f"❌ {symbol}: lỗi {e}")
+        raise
 
 def run_update_all_symbols():
     """
@@ -92,7 +97,7 @@ def run_update_all_symbols():
     # 2️⃣ Mã đã có trong DB
     try:
         df_existing = pd.read_sql(
-            f"SELECT DISTINCT symbol FROM {ONCE_TIME_STOCK_TABLE}", engine
+            f"SELECT DISTINCT symbol FROM {STOCK_PRICE_TABLE}", engine
         )
         existing_symbols = df_existing["symbol"].tolist()
     except Exception:
@@ -108,7 +113,7 @@ def run_update_all_symbols():
     print(f"🚀 Cập nhật {len(all_to_update)} mã.")
 
     for symbol in all_to_update:
-        update_stock_price_nearest(symbol, ONCE_TIME_STOCK_TABLE, engine)
+        update_stock_price_nearest(symbol, STOCK_PRICE_TABLE, engine)
 
     print("🎯 Hoàn tất cập nhật.")
 
@@ -125,7 +130,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="vnstock_el_daily_update_once_time_stock",
+    dag_id="vnstock_el_daily_update_stock_price",
     default_args=default_args,
     description="Daily EL stock price (auto detect new symbols)",
     schedule_interval="@daily",
