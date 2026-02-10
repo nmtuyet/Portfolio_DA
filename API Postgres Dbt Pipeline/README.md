@@ -160,8 +160,8 @@ dbt docs generate
 dbt docs serve
 ```
 
-![alt text](infra/dbt_documentation.png)
-![alt text](infra/dbt_lineage.png)
+![alt text](assets/dbt_documentation.png)
+![alt text](assets/dbt_lineage.png)
 
 <h2> BI & Dashboard </h2>
 
