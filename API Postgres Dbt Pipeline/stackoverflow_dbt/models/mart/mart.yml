@@ -1,0 +1,37 @@
+models:
+  - name: fact_questions
+    description: "Fact table chứa thông tin câu hỏi"
+    columns:
+      - name: question_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_users
+    description: "Dimension người dùng"
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+          - unique
+
+  - name: fact_user_activity
+    description: "Fact tổng hợp hoạt động của user: hỏi, trả lời, bình luận"
+
+    columns:
+      - name: user_id
+        description: "ID người dùng"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_users')
+              field: user_id
+
+      - name: total_questions
+        description: "Tổng số câu hỏi của user"
+
+      - name: total_answers
+        description: "Tổng số câu trả lời của user"
+
+      - name: total_comments
+        description: "Tổng số bình luận của user"

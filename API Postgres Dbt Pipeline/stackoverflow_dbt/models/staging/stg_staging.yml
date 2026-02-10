@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: stg_questions
+    description: "Staging questions extracted from StackOverflow raw questions"
+    columns:
+      - name: question_id
+        tests:
+          - not_null
+          - unique
+
+      - name: site
+        tests:
+          - not_null
+
+      - name: creation_date
+        tests:
+          - not_null
+
+      - name: owner_user_id
+        description: "User id of question owner"
+        tests:
+          - relationships:
+              to: ref('stg_users')
+              field: user_id
+              config:
+                severity: warn
+
+  - name: stg_answers
+    description: "Staging answers extracted from StackOverflow raw answers"
+    columns:
+      - name: answer_id
+        tests:
+          - not_null
+          - unique
+
+      - name: question_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_questions')
+                field: question_id
+                where: "question_id is not null"
+              config:
+                severity: warn
+
+      - name: site
+        tests:
+          - not_null
+
+      - name: owner_user_id
+        tests:
+          - relationships:
+              to: ref('stg_users')
+              field: user_id
+              config:
+                severity: warn
+
+  - name: stg_comments
+    description: "Staging comments extracted from StackOverflow raw comments"
+    columns:
+      - name: comment_id
+        tests:
+          - not_null
+          - unique
+
+      - name: post_id
+        tests:
+          - not_null
+
+      - name: site
+        tests:
+          - not_null
+
+  - name: stg_tags
+    description: "Staging tags extracted from StackOverflow raw tags"
+    columns:
+      - name: tag_name
+        tests:
+          - not_null
+
+      - name: site
+        tests:
+          - not_null
+
+      - name: question_count
+        tests:
+          - not_null
+
+  - name: stg_users
+    description: "Latest snapshot of users derived from questions and answers"
+    columns:
+      - name: user_id
+        tests:
+          - not_null
+
+      - name: site
+        tests:
+          - not_null
+
+      - name: user_site_pk
+        description: "Surrogate key for user + site"
+        tests:
+          - unique

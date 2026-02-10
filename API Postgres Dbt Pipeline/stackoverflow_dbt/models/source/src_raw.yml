@@ -1,0 +1,70 @@
+version: 2
+
+sources:
+  - name: stackoverflow_raw
+    description: "Raw tables ingested from StackOverflow API"
+    schema: raw
+
+    tables:
+      - name: questions
+        description: "Raw questions payload from StackOverflow API"
+        columns:
+          - name: question_id
+            tests:
+              - not_null
+          - name: site
+            tests:
+              - not_null
+          - name: creation_date
+          - name: extracted_at
+
+      - name: answers
+        description: "Raw answers payload from StackOverflow API"
+        columns:
+          - name: answer_id
+            tests:
+              - not_null
+          - name: question_id
+            tests:
+              - not_null
+          - name: site
+            tests:
+              - not_null
+          - name: creation_date
+          - name: extracted_at
+
+      - name: tags
+        description: "Raw tags payload from StackOverflow API"
+        columns:
+          - name: tag_name
+            tests:
+              - not_null
+          - name: site
+            tests:
+              - not_null
+          - name: extracted_at
+
+      - name: comments
+        description: "Raw comments payload from StackOverflow API"
+        columns:
+          - name: comment_id
+            tests:
+              - not_null
+          - name: post_id
+            tests:
+              - not_null
+          - name: site
+            tests:
+              - not_null
+          - name: creation_date
+          - name: extracted_at
+
+      - name: api_checkpoint
+        description: "Checkpoint table to track API incremental ingestion"
+        columns:
+          - name: api_name
+            tests:
+              - not_null
+              - unique
+          - name: last_to_date
+          - name: updated_at
